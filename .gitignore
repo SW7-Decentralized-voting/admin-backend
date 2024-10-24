@@ -130,3 +130,6 @@ dist
 .pnp.*
 
 **/*/globalConfigMongo.json
+
+.envrc
+.direnv
