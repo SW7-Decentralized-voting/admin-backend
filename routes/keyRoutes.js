@@ -1,11 +1,15 @@
 import express from 'express';
 import { auth } from '../middleware/verifyToken.js';
-import { generateKeys } from '../controllers/keys.js';
+import { generateKeys, getTotalKeys } from '../controllers/keys.js';
 
 // Queue status
 import Queue from 'bull';
 
 const router = express.Router();
+
+router.get('/', (req, res) => {
+	getTotalKeys(req, res);
+});
 
 router.post('/generate', auth, (req, res) => {
 	generateKeys(req, res);

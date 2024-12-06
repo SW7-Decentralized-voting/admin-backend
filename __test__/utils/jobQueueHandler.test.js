@@ -4,7 +4,7 @@ import populateDb from '../db/testPopulation.js';
 import PollingStation from '../../schemas/PollingStation.js';
 import Key from '../../schemas/Key.js';
 import jobHandler from '../../utils/jobQueueHandler.js';
-
+import { jest } from '@jest/globals';
 
 beforeAll(async () => {
 	connectDb();
@@ -26,6 +26,7 @@ describe('jobHandler', () => {
 
 	it('should throw an error if polling station does not exist', async () => {
 		const expectedVoters = 10;
+		jest.spyOn(console, 'error').mockImplementationOnce(() => { });
 
 		await expect(jobHandler({ data: { pollingStationId: '60d2e4f4d6c5ee001f2d2d3d', expectedVoters } })).rejects.toThrow('Polling station not found: 60d2e4f4d6c5ee001f2d2d3d');
 	});

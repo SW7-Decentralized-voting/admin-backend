@@ -2,9 +2,33 @@ import PollingStation from '../schemas/PollingStation.js';
 import { v4 as uuidv4 } from 'uuid';
 import Queue from 'bull';
 import jobHandler from '../utils/jobQueueHandler.js';
+import axios from 'axios';
+import Key from '../schemas/Key.js';
 
 const baseUrl = 'http://localhost:';
 const port = process.env.PORT || 8888;
+
+/**
+ * Get the total number of keys generated
+ * @param {Request} req Express request object
+ * @param {Response} res Express response object to send the response
+ * @returns {Response} The total number of keys generated
+ */
+export async function getTotalKeys(req, res) {
+	try {
+		const totalKeys = await Key.countDocuments();
+		return res.json({
+			totalKeys,
+		});
+	} catch (error) {
+		// eslint-disable-next-line no-console
+		console.error(error);
+		return res.status(500).json({
+			status: 'error',
+			error: 'An unexpected error occurred while fetching the total number of keys',
+		});
+	}
+}
 
 /**
  * Start key generation for polling stations in the database or provided in the request body. 
@@ -14,6 +38,25 @@ const port = process.env.PORT || 8888;
  * @returns {Response} A message indicating that key generation has started
  */
 export async function generateKeys(req, res) {
+	try {
+		await Key.deleteMany({});
+		const phase = (await axios.get(process.env.BLOCKCHAIN_URL + '/election/current-phase')).data?.currentPhase;
+
+		if (phase !== '0') {
+			return res.status(400).json({
+				status: 'error',
+				error: 'Key generation can only be started during the key-generation phase',
+			});
+		}
+	} catch (error) {
+		if (!error.response) {
+			return res.status(500).json({
+				status: 'error',
+				error: 'An unexpected error occurred while checking the current phase',
+			});
+		}
+	}
+
 	const queueId = uuidv4();
 	let pollingStationIds = req.body.pollingStations;
 
